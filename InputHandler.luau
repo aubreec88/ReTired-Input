@@ -93,8 +93,6 @@ function Main.CreateInputContext(creationData:CreateInputContextData):InputConte
 
 	local inputsFolder:Folder
 
-	local selfCharacter:Model = (selfPlayer.Character :: Model)
-
 	local InputContext = (Instance.new("InputContext") :: InputContext)
 	InputContext.Name = inputContextName
 	InputContext.Enabled = enabled
@@ -134,7 +132,9 @@ end
 	(december)
 ]]
 function Main.CreateInputAction(creationData:CreateInputActionData):InputAction
-	local selfCharacter:Model = (selfPlayer.CharacterAdded:Wait() :: Model)
+    repeat task.wait() until selfPlayer.Character
+
+	local selfCharacter:Model = (selfPlayer.Character :: Model)
 	
 	-- Using "WaitForChild" to play it safe. [[december]]
 	local selfHumanoid:Humanoid = (selfCharacter:WaitForChild("Humanoid") :: Humanoid)
@@ -165,7 +165,6 @@ function Main.CreateInputAction(creationData:CreateInputActionData):InputAction
 
 	if onPress then
 		print("onPress is true", onPress)
-		local selfHumanoidDiedConnection:RBXScriptConnection
 		local onPressConnection:RBXScriptConnection
 
 		onPressConnection = InputAction.Pressed:Connect(function()
@@ -175,19 +174,14 @@ function Main.CreateInputAction(creationData:CreateInputActionData):InputAction
 		end)
 		
 		-- Memory leak protection. [[december]]
-		selfHumanoidDiedConnection = selfHumanoid.Died:Connect(function()
+		selfHumanoid.Died:Once(function()
 			if onPressConnection then
 				onPressConnection:Disconnect()
-			end
-			
-			if selfHumanoidDiedConnection then
-				selfHumanoidDiedConnection:Disconnect()
 			end
 		end)
 	end
 
 	if onRelease then
-		local selfHumanoidDiedConnection:RBXScriptConnection
 		local onReleaseConnection:RBXScriptConnection
 
 		onReleaseConnection = InputAction.Released:Connect(function()
@@ -197,13 +191,9 @@ function Main.CreateInputAction(creationData:CreateInputActionData):InputAction
 		end)
 		
 		-- Memory leak protection. [[december]]
-		selfHumanoidDiedConnection = selfHumanoid.Died:Connect(function()
+	    selfHumanoid.Died:Once(function()
 			if onReleaseConnection then
 				onReleaseConnection:Disconnect()
-			end
-
-			if selfHumanoidDiedConnection then
-				selfHumanoidDiedConnection:Disconnect()
 			end
 		end)
 	end
